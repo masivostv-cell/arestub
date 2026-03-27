@@ -308,16 +308,16 @@
             <h3 class="font-bold text-sm mb-4 border-b pb-1">Configuración y Diagnóstico</h3>
             <div class="text-xs space-y-4">
                 <div class="p-3 bg-green-50 border border-green-400 text-green-800 rounded">
-                    <strong>Auto-Descarga Activada:</strong> 
-                    El archivo se descargará automáticamente en tu navegador al completarse la barra de progreso. Si el navegador lo bloquea como "Pop-up", verás un botón verde para forzar la descarga.
+                    <strong>Auto-Descarga Activada (Motor Actualizado v5):</strong> 
+                    Se han integrado múltiples servidores de respaldo. El archivo se descargará automáticamente en tu navegador al completarse la barra de progreso.
                 </div>
             </div>
         </div>
 
         <!-- Barra de estado inferior -->
         <div class="bg-[#ECE9D8] border-t border-gray-400 p-1 flex justify-between text-[10px] text-gray-700">
-            <div><i class="fas fa-network-wired text-green-500"></i> Conectado (Auto-Descarga)</div>
-            <div>AresTube v4.0 | Automático</div>
+            <div><i class="fas fa-network-wired text-green-500"></i> Conectado (Auto-Descarga v5)</div>
+            <div>AresTube v5.0 | Estable</div>
         </div>
     </div>
 
@@ -435,13 +435,14 @@
             updateDownloadBadge();
         }
 
-        // Iniciar Descarga con Autoejecución
+        // Iniciar Descarga con Autoejecución y Múltiples Servidores (v5)
         async function startDownload(title, url, format) {
             const id = downloadIdCounter++;
-            
-            // Generador de enlace de respaldo (Fallback)
             const encodedUrl = encodeURIComponent(url);
-            const fallbackUrl = `https://cobalt.tools/?url=${encodedUrl}`;
+            
+            // Plan C: Si todas las APIs fallan por restricciones del navegador, este enlace alterno
+            // SÍ carga el video automáticamente en lugar de dejar la pantalla en blanco.
+            const fallbackUrl = `https://snapsave.app/?url=${encodedUrl}`;
 
             const dl = { 
                 id, 
@@ -457,16 +458,31 @@
             renderDownloads();
             updateDownloadBadge();
 
-            // 1. Iniciamos la petición a la API en segundo plano
-            let fetchPromise = fetch('https://api.cobalt.tools/api/json', {
+            // Configuración del Payload para que funcione con las versiones nuevas de la API (v9 y v10)
+            const payload = {
+                url: url,
+                isAudioOnly: format === 'mp3',
+                aFormat: format === 'mp3' ? 'mp3' : 'best',
+                downloadMode: format === 'mp3' ? 'audio' : 'auto',
+                audioFormat: format === 'mp3' ? 'mp3' : 'best',
+                videoQuality: '720'
+            };
+
+            // 1. Iniciamos la petición a la API con un sistema de respaldo (Try/Catch en cadena)
+            let fetchPromise = fetch('https://api.cobalt.tools/', { // Intento 1: Servidor principal (v10)
                 method: 'POST',
                 headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    url: url, 
-                    isAudioOnly: format === 'mp3',
-                    aFormat: format === 'mp3' ? 'mp3' : 'best'
-                })
-            }).then(res => res.json()).catch(err => null);
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.ok ? res.json() : Promise.reject("Fallo servidor 1"))
+            .catch(() => {
+                // Intento 2: Servidor público espejo (por si el primero bloquea el CORS de Github)
+                return fetch('https://co.wuk.sh/api/json', {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).then(res => res.ok ? res.json() : null).catch(() => null);
+            });
 
             // 2. Simulamos la barra de Ares (Visual)
             let simInterval = setInterval(async () => {
@@ -486,24 +502,22 @@
                     clearInterval(simInterval);
                     updateDownloadBadge();
                     
-                    // Esperamos el resultado de la API
+                    // Esperamos el resultado de nuestras peticiones a las APIs
                     const apiData = await fetchPromise;
                     
                     if(apiData && apiData.url) {
-                        dl.finalUrl = apiData.url; // Asignar link directo
+                        dl.finalUrl = apiData.url; // Enlace directo extraído con éxito
                         
-                        // ! AUTO DESCARGA !
-                        // Usamos un iframe oculto para intentar descargar sin cambiar de pestaña
+                        // ! AUTO DESCARGA DIRECTA !
                         document.getElementById('downloadFrame').src = apiData.url;
                         
-                        // Fallback por si el iframe falla, abrimos nueva pestaña
                         setTimeout(() => {
                            window.open(apiData.url, '_blank'); 
                         }, 500);
 
                     } else {
-                        console.log("Error de API, usando fallback.");
-                        // Si la API falla, abrimos el fallback automáticamente
+                        console.log("Servidores internos bloqueados por CORS, usando ruta alterna.");
+                        // Si todo falló, usamos SnapSave que no se queda en blanco
                         window.open(dl.finalUrl, '_blank');
                     }
                     
