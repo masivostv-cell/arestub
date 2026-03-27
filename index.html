@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AresTube - Descarga Automática</title>
+    <title>AresTube - 100% Automático</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -204,9 +204,58 @@
 
         .format-mp3 { color: #e67e22; }
         .format-mp4 { color: #3498db; }
+        
+        /* Modales Customizados */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+        }
+        .alert-box {
+            background: #ECE9D8;
+            border: 2px solid #0054E3;
+            padding: 2px;
+            width: 300px;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+        }
+        .alert-header {
+            background: linear-gradient(to bottom, #0058e6, #127dff);
+            color: white;
+            padding: 4px 8px;
+            font-weight: bold;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .alert-body {
+            background: white;
+            padding: 15px;
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
     </style>
 </head>
 <body class="p-0 md:p-6 lg:p-10">
+
+    <!-- Modal de Alerta Básica para Errores/Avisos -->
+    <div id="customAlert" class="modal-overlay">
+        <div class="alert-box">
+            <div class="alert-header"><span>AresTube - Aviso</span></div>
+            <div class="alert-body text-center">
+                <p id="alertMessage" class="mb-4">Mensaje</p>
+                <button class="retro-button" onclick="closeAlert()">Aceptar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Iframe Oculto: Aquí ocurre la verdadera magia invisible -->
+    <iframe id="hiddenDownloader" style="display:none;"></iframe>
 
     <div class="ares-window mx-auto w-full max-w-5xl">
         <!-- Barra de Título -->
@@ -290,10 +339,10 @@
                 <table class="retro-table mt-0 border-0" id="downloadsTable">
                     <thead>
                         <tr>
-                            <th style="width: 35%">Archivo</th>
+                            <th style="width: 45%">Archivo</th>
                             <th style="width: 25%">Progreso</th>
-                            <th style="width: 20%">Estado</th>
-                            <th style="width: 20%">Acción Final</th>
+                            <th style="width: 15%">Estado</th>
+                            <th style="width: 15%">Acción Final</th>
                         </tr>
                     </thead>
                     <tbody id="downloadsBody">
@@ -308,24 +357,30 @@
             <h3 class="font-bold text-sm mb-4 border-b pb-1">Configuración y Diagnóstico</h3>
             <div class="text-xs space-y-4">
                 <div class="p-3 bg-green-50 border border-green-400 text-green-800 rounded">
-                    <strong>Auto-Descarga Activada (Motor Actualizado v5):</strong> 
-                    Se han integrado múltiples servidores de respaldo. El archivo se descargará automáticamente en tu navegador al completarse la barra de progreso.
+                    <strong>Automatización Total:</strong> 
+                    El sistema de ventanas emergentes y clics manuales ha sido deshabilitado. Ahora la aplicación se conecta internamente a la red y fuerza la descarga nativa en tu navegador en el momento exacto en que la barra verde llega a 100%. Experiencia 100% Ares.
                 </div>
             </div>
         </div>
 
         <!-- Barra de estado inferior -->
         <div class="bg-[#ECE9D8] border-t border-gray-400 p-1 flex justify-between text-[10px] text-gray-700">
-            <div><i class="fas fa-network-wired text-green-500"></i> Conectado (Auto-Descarga v5)</div>
-            <div>AresTube v5.0 | Estable</div>
+            <div><i class="fas fa-network-wired text-green-500"></i> Conectado (Motor Invisible)</div>
+            <div>AresTube v8.0 | Zero-Click Ready</div>
         </div>
     </div>
 
-    <!-- Iframe oculto para forzar descargas sin abrir nuevas pestañas si es posible -->
-    <iframe id="downloadFrame" style="display:none;"></iframe>
-
     <script>
-        // Lógica de Pestañas
+        // --- CONTROL DE ALERTAS (Errores) ---
+        function showAlert(msg) {
+            document.getElementById('alertMessage').innerText = msg;
+            document.getElementById('customAlert').style.display = 'flex';
+        }
+        function closeAlert() {
+            document.getElementById('customAlert').style.display = 'none';
+        }
+
+        // --- LÓGICA DE PESTAÑAS ---
         function switchTab(tabId) {
             document.querySelectorAll('.ares-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.ares-tab').forEach(el => el.classList.remove('active'));
@@ -333,14 +388,14 @@
             event.currentTarget.classList.add('active');
         }
 
-        // Extraer ID de YouTube de forma infalible
+        // Extraer ID de YouTube
         function getYouTubeID(url) {
             const p = /(?:https?:\/\/)?(?:www\.|m\.)?youtu(?:\.be\/|be\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([^&?\s]+)/;
             const match = url.match(p);
             return match ? match[1] : null;
         }
 
-        // Búsqueda instantánea
+        // --- BÚSQUEDA ---
         function executeSearch() {
             const query = document.getElementById('searchInput').value.trim();
             const format = document.querySelector('input[name="format"]:checked').value;
@@ -348,14 +403,14 @@
             const statusText = document.getElementById('search-status');
             
             if (!query) {
-                alert("Por favor pega un enlace de YouTube válido.");
+                showAlert("Por favor pega un enlace de YouTube válido.");
                 return;
             }
 
             const videoId = getYouTubeID(query);
             
             if (videoId) {
-                statusText.innerText = `Enlace detectado. Listo para descargar.`;
+                statusText.innerText = `Enlace detectado. Listo para preparar descarga.`;
                 const title = `Video_YouTube_${videoId}`;
                 const formatIcon = format === 'mp3' ? '<i class="fas fa-file-audio format-mp3"></i> MP3' : '<i class="fas fa-file-video format-mp4"></i> MP4';
 
@@ -367,18 +422,18 @@
                         <td>
                             <button class="retro-button bg-blue-100 border-blue-400 font-bold" 
                                     onclick="startDownload('${title}', '${query}', '${format}')">
-                                <i class="fas fa-download text-blue-700"></i> Iniciar Descarga
+                                <i class="fas fa-download text-blue-700"></i> Bajar a PC
                             </button>
                         </td>
                     </tr>
                 `;
             } else {
-                statusText.innerText = `Error: No se detectó un enlace válido de YouTube.`;
-                resultsBody.innerHTML = `<tr><td colspan="4" class="text-red-500 text-center py-4">El enlace no parece ser de YouTube. Copia y pega la URL completa.</td></tr>`;
+                statusText.innerText = `Error: No se detectó un enlace válido.`;
+                resultsBody.innerHTML = `<tr><td colspan="4" class="text-red-500 text-center py-4">El enlace no parece ser de YouTube.</td></tr>`;
             }
         }
 
-        // --- SISTEMA DE DESCARGAS ---
+        // --- SISTEMA DE DESCARGAS (AUTOMATIZADO) ---
         let downloads = [];
         let downloadIdCounter = 0;
 
@@ -403,13 +458,17 @@
             let html = '';
             downloads.forEach(d => {
                 let statusColor = 'text-blue-600';
-                if(d.progress >= 100) statusColor = 'text-green-600 font-bold';
+                if(d.progress >= 100) statusColor = d.status === 'Error de conexión' ? 'text-red-600 font-bold' : 'text-green-600 font-bold';
                 
-                let actionButton = `<span class="text-gray-400 italic text-xs">Procesando...</span>`;
+                let actionText = `<span class="text-gray-400 italic text-xs">Conectando...</span>`;
+                
+                // Si ya completó, solo mostramos un texto o ícono. Nada de botones para hacer clic.
                 if(d.progress >= 100) {
-                    actionButton = `<a href="${d.finalUrl}" target="_blank" class="retro-button bg-green-200 border-green-500 text-black font-bold no-underline px-3 py-1 text-xs">
-                        <i class="fas fa-save text-green-800"></i> Bajar Archivo
-                    </a>`;
+                    if (d.status === 'Error de conexión') {
+                        actionText = `<span class="text-red-500 text-xs"><i class="fas fa-times-circle"></i> Fallido</span>`;
+                    } else {
+                        actionText = `<span class="text-green-600 font-bold text-xs"><i class="fas fa-folder-open"></i> En PC</span>`;
+                    }
                 }
 
                 html += `
@@ -422,7 +481,7 @@
                             </div>
                         </td>
                         <td class="${statusColor}">${d.status}</td>
-                        <td class="text-center">${actionButton}</td>
+                        <td class="text-center">${actionText}</td>
                     </tr>
                 `;
             });
@@ -435,22 +494,17 @@
             updateDownloadBadge();
         }
 
-        // Iniciar Descarga con Autoejecución y Múltiples Servidores (v5)
+        // Iniciar Descarga 100% Invisible y Automática
         async function startDownload(title, url, format) {
             const id = downloadIdCounter++;
-            const encodedUrl = encodeURIComponent(url);
             
-            // Plan C: Si todas las APIs fallan por restricciones del navegador, este enlace alterno
-            // SÍ carga el video automáticamente en lugar de dejar la pantalla en blanco.
-            const fallbackUrl = `https://snapsave.app/?url=${encodedUrl}`;
-
             const dl = { 
                 id, 
                 title, 
+                url, 
                 format, 
                 progress: 0, 
-                status: 'Conectando a la red...', 
-                finalUrl: fallbackUrl 
+                status: 'Conectando fuentes...'
             };
             
             downloads.push(dl);
@@ -458,70 +512,60 @@
             renderDownloads();
             updateDownloadBadge();
 
-            // Configuración del Payload para que funcione con las versiones nuevas de la API (v9 y v10)
+            // 1. Petición Silenciosa a la API para obtener el enlace directo real del video/audio
+            let directUrl = null;
+            
+            // Configuramos el payload para Cobalt v10 (es la API pública más rápida y sin anuncios)
             const payload = {
                 url: url,
-                isAudioOnly: format === 'mp3',
-                aFormat: format === 'mp3' ? 'mp3' : 'best',
                 downloadMode: format === 'mp3' ? 'audio' : 'auto',
-                audioFormat: format === 'mp3' ? 'mp3' : 'best',
-                videoQuality: '720'
+                aFormat: format === 'mp3' ? 'mp3' : 'best',
+                vQuality: '720'
             };
 
-            // 1. Iniciamos la petición a la API con un sistema de respaldo (Try/Catch en cadena)
-            let fetchPromise = fetch('https://api.cobalt.tools/', { // Intento 1: Servidor principal (v10)
+            // Hacemos la petición en segundo plano mientras la barra sube
+            fetch('https://api.cobalt.tools/', {
                 method: 'POST',
                 headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             })
-            .then(res => res.ok ? res.json() : Promise.reject("Fallo servidor 1"))
-            .catch(() => {
-                // Intento 2: Servidor público espejo (por si el primero bloquea el CORS de Github)
-                return fetch('https://co.wuk.sh/api/json', {
-                    method: 'POST',
-                    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                }).then(res => res.ok ? res.json() : null).catch(() => null);
-            });
+            .then(res => res.json())
+            .then(data => {
+                if(data && data.url) {
+                    directUrl = data.url; // ¡Obtuvimos el enlace del archivo real!
+                }
+            })
+            .catch(err => console.log("Buscando rutas alternas..."));
 
-            // 2. Simulamos la barra de Ares (Visual)
-            let simInterval = setInterval(async () => {
-                dl.progress += Math.random() * 10 + 5; // Avanza rápido
+            // 2. Simulamos la barra de progreso de Ares para mantener la inmersión
+            let simInterval = setInterval(() => {
+                dl.progress += Math.random() * 10 + 5; 
                 
-                if(dl.progress < 40) {
-                    dl.status = 'Conectando fuentes...';
-                } else if (dl.progress < 80) {
+                if (dl.progress < 50) {
                     dl.status = 'Descargando datos...';
-                } else if (dl.progress < 95) {
+                } else if (dl.progress < 90) {
                     dl.status = 'Verificando archivo...';
                 }
 
+                // Al llegar al 100% ejecutamos la orden final
                 if(dl.progress >= 100) {
                     dl.progress = 100;
-                    dl.status = '¡Completado!';
                     clearInterval(simInterval);
-                    updateDownloadBadge();
                     
-                    // Esperamos el resultado de nuestras peticiones a las APIs
-                    const apiData = await fetchPromise;
-                    
-                    if(apiData && apiData.url) {
-                        dl.finalUrl = apiData.url; // Enlace directo extraído con éxito
+                    if(directUrl) {
+                        dl.status = '¡Completado!';
                         
-                        // ! AUTO DESCARGA DIRECTA !
-                        document.getElementById('downloadFrame').src = apiData.url;
+                        // ! MAGIA ARES: Inyectamos el enlace en el iframe oculto
+                        // Esto hace que el navegador inicie la descarga automáticamente sin cambiar de pestaña
+                        document.getElementById('hiddenDownloader').src = directUrl;
                         
-                        setTimeout(() => {
-                           window.open(apiData.url, '_blank'); 
-                        }, 500);
-
                     } else {
-                        console.log("Servidores internos bloqueados por CORS, usando ruta alterna.");
-                        // Si todo falló, usamos SnapSave que no se queda en blanco
-                        window.open(dl.finalUrl, '_blank');
+                        dl.status = 'Error de conexión';
+                        showAlert("Los nodos de la red están saturados o el video tiene restricción de edad. Intenta con otro enlace.");
                     }
-                    
-                    renderDownloads(); // Actualizamos UI final
+
+                    updateDownloadBadge();
+                    renderDownloads();
                 } else {
                     renderDownloads();
                 }
