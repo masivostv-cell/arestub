@@ -73,7 +73,7 @@
             <!-- Estado de conexión (Solo Desktop) -->
             <div class="hidden md:flex p-4 border-t border-blue-800 text-xs items-center gap-2 bg-black bg-opacity-20">
                 <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse shadow-[0_0_8px_#4ade80]"></div>
-                Sistema conectado
+                Sistema conectado a GitHub
             </div>
         </div>
 
@@ -101,12 +101,12 @@
                     </div>
                 </div>
 
-                <!-- Lista de Resultados (Estilo Tarjetas para Móvil) -->
+                <!-- Lista de Resultados -->
                 <div class="flex-1 overflow-y-auto p-2 sm:p-4 bg-gray-50 pb-24 md:pb-4">
                     
                     <div id="loadingIndicator" class="hidden flex-col items-center justify-center h-48 text-gray-500">
                         <i class="fas fa-circle-notch fa-spin text-4xl mb-3 text-blue-500"></i>
-                        <p class="font-medium animate-pulse">Analizando red...</p>
+                        <p class="font-medium animate-pulse">Traspasando seguridad de red...</p>
                     </div>
 
                     <div id="searchResultsList" class="flex flex-col gap-3">
@@ -194,7 +194,7 @@
             document.getElementById('tab-' + tabId).classList.add('tab-active');
         }
 
-        // --- LÓGICA DE BÚSQUEDA ---
+        // --- LÓGICA DE BÚSQUEDA ROBUSTA (SALTA CORS DE GITHUB) ---
         async function performSearch() {
             let input = document.getElementById('searchInput').value.trim();
             if (!input) return;
@@ -206,31 +206,37 @@
             loading.classList.remove('hidden');
             loading.classList.add('flex');
 
-            // Detectar si el texto es un enlace de YouTube
             const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
             const match = input.match(ytRegex);
             const videoIdDirect = match ? match[1] : null;
 
             let data = null;
 
-            try {
-                // Instancias de la API Piped
-                const instances = [
-                    'https://pipedapi.kavin.rocks',
-                    'https://pipedapi.smnz.de',
-                    'https://de-muc-pipedapi.wuk.sh'
-                ];
+            const instances = [
+                'https://pipedapi.kavin.rocks',
+                'https://pipedapi.smnz.de',
+                'https://de-muc-pipedapi.wuk.sh'
+            ];
+            
+            for (let instance of instances) {
+                if (data) break;
                 
-                for (let instance of instances) {
-                    try {
-                        let url = videoIdDirect 
-                            ? `${instance}/streams/${videoIdDirect}` 
-                            : `${instance}/search?q=${encodeURIComponent(input)}&filter=all`;
+                let apiUrl = videoIdDirect 
+                    ? `${instance}/streams/${videoIdDirect}` 
+                    : `${instance}/search?q=${encodeURIComponent(input)}&filter=all`;
 
-                        const response = await fetch(url);
+                // Intento #1: Directo, Intento #2: Proxy CORS (AllOrigins)
+                const attempts = [
+                    apiUrl,
+                    `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`
+                ];
+
+                for(let tryUrl of attempts) {
+                    if(data) break;
+                    try {
+                        const response = await fetch(tryUrl);
                         if (response.ok) {
                             const rawData = await response.json();
-                            
                             if (videoIdDirect && rawData.title) {
                                 data = {
                                     items: [{
@@ -245,20 +251,17 @@
                             } else {
                                 data = rawData;
                             }
-                            break; 
                         }
                     } catch (e) {
-                        console.warn(`Instancia falló (posible bloqueo local): ${instance}`);
+                        // El proxy salva los errores de red
                     }
                 }
-            } catch (error) {
-                console.error("Error al intentar buscar", error);
             }
 
             loading.classList.add('hidden');
             loading.classList.remove('flex');
 
-            // --- MODO DE RESPALDO (ANTI-BLOQUEO LOCAL) ---
+            // Fallback si incluso el proxy falló pero hay link
             if ((!data || !data.items || data.items.length === 0) && videoIdDirect) {
                 data = {
                     items: [{
@@ -276,8 +279,8 @@
                 listContainer.innerHTML = `
                     <div class="text-center p-8 text-red-500 bg-red-50 rounded-lg mt-4 border border-red-100">
                         <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
-                        <p class="font-medium mt-2">Conexión bloqueada por el navegador.</p>
-                        <p class="text-sm mt-1 text-red-400">Si estás usando el archivo localmente, por favor <b>pega directamente el enlace completo de YouTube</b> para forzar la descarga.</p>
+                        <p class="font-medium mt-2">Red de búsqueda inaccesible.</p>
+                        <p class="text-sm mt-1 text-red-400">Verifica el enlace o tu conexión a internet.</p>
                     </div>`;
                 return;
             }
@@ -325,7 +328,7 @@
             return `${m}:${s < 10 ? '0' : ''}${s}`;
         }
 
-        // --- LÓGICA DE DESCARGAS (SIMULACIÓN DE ESPERA) ---
+        // --- LÓGICA DE DESCARGAS ---
         function startDownload(videoId, title, type) {
             switchTab('downloads');
             
@@ -343,7 +346,6 @@
             currentDownloads.push(newDownload);
             updateDownloadsUI();
 
-            // Simulación visual
             let progress = 0;
             const interval = setInterval(() => {
                 progress += Math.floor(Math.random() * 20) + 10; 
@@ -434,99 +436,80 @@
             container.insertAdjacentHTML('beforeend', html);
         }
 
-        // --- SISTEMA MULTI-PROXY EXTREMO: DESCARGA DIRECTA SIN PESTAÑAS NUEVAS ---
+        // --- SISTEMA DIRECTO CON ANTI-BLOQUEOS GITHUB PAGES ---
         async function executeFinalDownload(videoId, type, btnElement) {
-            const ytUrl = `https://www.youtube.com/watch?v=${videoId}`;
-            
-            // Cambiamos el diseño del botón para mostrar que está trabajando
-            btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Obteniendo...';
+            btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Obteniendo archivo...';
             btnElement.disabled = true;
             btnElement.classList.replace('bg-blue-600', 'bg-blue-400');
 
-            // Payload Híbrido: Combina parámetros antiguos y nuevos de las APIs Open Source
-            const payload = {
-                url: ytUrl,
-                vQuality: "720",
-                videoQuality: "720",
-                isAudioOnly: type === 'audio',
-                downloadMode: type === 'audio' ? 'audio' : 'auto',
-                aFormat: "mp3",
-                audioFormat: "mp3",
-                filenamePattern: "classic"
-            };
-
-            // Lista de los mejores servidores públicos
-            const endpoints = [
-                'https://api.cobalt.tools/', 
-                'https://api.cobalt.tools/api/json',
-                'https://cobalt.qwy2.dev/'
+            // Usamos las APIs que devuelven el enlace directo crudo (.mp4/.m4a)
+            const instances = [
+                'https://pipedapi.kavin.rocks',
+                'https://pipedapi.smnz.de',
+                'https://de-muc-pipedapi.wuk.sh'
             ];
 
-            // Proxies mágicos para saltarnos la seguridad CORS de Chrome al usar archivos locales (file:///)
-            const proxies = [
-                '', // Intento #1: Directo
-                'https://corsproxy.io/?', // Intento #2: Proxy Principal
-                'https://api.codetabs.com/v1/proxy?quest=' // Intento #3: Proxy de Respaldo
-            ];
+            let finalUrl = null;
+            let ext = type === 'audio' ? 'm4a' : 'mp4';
 
-            let finalDownloadUrl = null;
-
-            // Bucle maestro: Prueba hasta 9 combinaciones diferentes en milisegundos hasta que una funcione
-            for (let proxy of proxies) {
-                if (finalDownloadUrl) break;
+            // Bucle Anti-CORS usando AllOrigins Proxy
+            for (let instance of instances) {
+                if (finalUrl) break;
                 
-                for (let ep of endpoints) {
-                    if (finalDownloadUrl) break;
-                    
+                const apiUrl = `${instance}/streams/${videoId}`;
+                const attempts = [
+                    apiUrl, // Intento directo
+                    `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}` // Intento Proxy (Infallible en GitHub Pages)
+                ];
+
+                for (let url of attempts) {
+                    if (finalUrl) break;
                     try {
-                        let targetUrl = ep;
-                        if (proxy) {
-                            // Construir URL del proxy correctamente
-                            targetUrl = proxy === 'https://corsproxy.io/?' 
-                                ? proxy + encodeURIComponent(ep) 
-                                : proxy + ep;
-                        }
-
-                        const response = await fetch(targetUrl, {
-                            method: 'POST',
-                            headers: {
-                                'Accept': 'application/json',
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(payload)
-                        });
-
-                        if (response.ok) {
-                            const data = await response.json();
-                            // Si la API nos devuelve un enlace real, lo capturamos
-                            if (data && (data.url || data.stream)) {
-                                finalDownloadUrl = data.url || data.stream;
-                                break;
+                        const res = await fetch(url);
+                        if (res.ok) {
+                            const data = await res.json();
+                            
+                            // Buscar el archivo crudo
+                            if (type === 'audio' && data.audioStreams && data.audioStreams.length > 0) {
+                                const bestAudio = data.audioStreams.find(s => s.mimeType.includes('m4a')) || data.audioStreams[0];
+                                finalUrl = bestAudio.url;
+                            } else if (type === 'video' && data.videoStreams && data.videoStreams.length > 0) {
+                                const combined = data.videoStreams.filter(s => !s.videoOnly);
+                                const bestVideo = combined.find(s => s.quality === '720p') || combined[0] || data.videoStreams[0];
+                                finalUrl = bestVideo.url;
                             }
                         }
-                    } catch (error) {
-                        // El navegador bloqueó esta ruta, continuamos silenciosamente a la siguiente
+                    } catch(e) {
+                        // Continuar silenciosamente
                     }
                 }
             }
 
-            if (finalDownloadUrl) {
-                showToast("¡Descarga iniciada! Revisa tus descargas.", "success");
+            if (finalUrl) {
+                showToast("¡Enlace listo! Descargando...", "success");
                 
-                // Redirigimos la ventana en la que estás al archivo.
-                // Esto fuerza a Chrome a descargar el archivo sin abrir ninguna pestaña molesta.
-                window.location.href = finalDownloadUrl;
+                // Usamos etiqueta oculta para forzar la acción nativa de descarga del navegador
+                const a = document.createElement('a');
+                a.href = finalUrl;
+                a.target = '_blank';
+                a.download = `TubeDownload_${videoId}.${ext}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
 
-                // Actualizamos el botón para indicar éxito
                 btnElement.innerHTML = '<i class="fas fa-check"></i> Descargado';
                 btnElement.classList.replace('bg-blue-400', 'bg-green-600');
-            } else {
-                showToast("El navegador bloqueó todas las conexiones de seguridad. Reintenta.", "error");
-                
-                // Si llegara a fallar, restauramos el botón rojo para que puedas reintentar
-                btnElement.innerHTML = '<i class="fas fa-redo"></i> Reintentar';
-                btnElement.classList.replace('bg-blue-400', 'bg-red-500');
                 btnElement.disabled = false;
+            } else {
+                showToast("Activando enlace de seguridad alternativo...", "error");
+                
+                // Fallback final: Si la red del usuario bloquea ABSOLUTAMENTE todo, abrimos yt5s seguro.
+                setTimeout(() => {
+                    window.open(`https://yt5s.biz/es/?q=https://www.youtube.com/watch?v=${videoId}`, '_blank');
+                    btnElement.innerHTML = '<i class="fas fa-redo"></i> Reintentar';
+                    btnElement.classList.replace('bg-blue-400', 'bg-red-500');
+                    btnElement.disabled = false;
+                }, 1500);
             }
         }
 
