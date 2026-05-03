@@ -2,580 +2,544 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AresTube - 100% Automático</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tube Download - Web App</title>
+    <!-- Tailwind CSS para el diseño -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Font Awesome para los íconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Estilos Retro estilo Windows XP / Ares */
-        body {
-            background-color: #ECE9D8; 
-            font-family: 'Tahoma', 'Arial', sans-serif;
-            overflow: hidden;
-        }
-
-        .ares-window {
-            background-color: #ECE9D8;
-            border: 1px solid #0054E3;
-            border-radius: 8px 8px 0 0;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            max-height: 100vh;
-        }
-
-        .ares-titlebar {
-            background: linear-gradient(to bottom, #0058e6 0%, #3a93ff 8%, #288eff 40%, #127dff 88%, #036bfe 100%);
-            color: white;
-            padding: 4px 8px;
-            font-weight: bold;
-            font-size: 13px;
-            border-radius: 7px 7px 0 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
-        }
-
-        .ares-titlebar-buttons button {
-            background: linear-gradient(to bottom, #f1f2f5, #c3c7cb);
-            border: 1px solid #000;
-            border-radius: 3px;
-            width: 20px;
-            height: 20px;
-            font-weight: bold;
-            font-size: 10px;
-            color: black;
-            text-shadow: none;
-            margin-left: 2px;
-            cursor: pointer;
-        }
+        /* Estilos personalizados */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; }
         
-        .ares-titlebar-buttons button.close {
-            background: linear-gradient(to bottom, #e06c6c, #ce3b3b);
-            color: white;
-        }
-
-        .ares-tabs-container {
-            background: #ECE9D8;
-            padding: 10px 10px 0 10px;
-            border-bottom: 2px solid #8E8F8F;
-            display: flex;
-            gap: 2px;
-        }
-
-        .ares-tab {
-            background: linear-gradient(to bottom, #f0f0f0, #d4d0c8);
-            border: 1px solid #8E8F8F;
-            border-bottom: none;
-            padding: 6px 15px;
-            border-radius: 4px 4px 0 0;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: normal;
-            color: #333;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .ares-tab.active {
-            background: #FFFFFF;
-            font-weight: bold;
-            position: relative;
-            top: 2px;
-            border-bottom: 2px solid #FFFFFF;
-            color: #000;
-            z-index: 10;
-        }
-
-        .ares-tab i { color: #1a62cc; }
-
-        .ares-content {
-            background-color: #FFFFFF;
-            flex-grow: 1;
-            padding: 15px;
-            overflow-y: auto;
-            display: none;
-        }
-
-        .ares-content.active { display: block; }
-
-        .search-box {
-            background: #f5f5f5;
-            border: 1px solid #a0a0a0;
-            padding: 15px;
-            border-radius: 4px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .retro-input {
-            border: 1px inset #a0a0a0;
-            padding: 4px;
-            font-size: 13px;
-            width: 100%;
-        }
-
-        .retro-button {
-            background: linear-gradient(to bottom, #f3f3f3, #ebebeb 45%, #dddddd 50%, #cfcfcf);
-            border: 1px solid #707070;
-            padding: 4px 15px;
-            font-size: 12px;
-            cursor: pointer;
-            border-radius: 3px;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
-        }
+        /* Tema Ares actualizado */
+        .sidebar-gradient { background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%); }
+        .tab-active { background-color: rgba(255, 255, 255, 0.15); border-left: 4px solid #60a5fa; }
         
-        .retro-button:active {
-            background: #cfcfcf;
-            border: 1px inset #707070;
+        /* Animación de barra de progreso */
+        .progress-bar-striped {
+            background-image: linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent);
+            background-size: 1rem 1rem;
+            animation: progress-stripes 1s linear infinite;
+        }
+        @keyframes progress-stripes {
+            from { background-position: 1rem 0; }
+            to { background-position: 0 0; }
         }
 
-        .retro-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 11px;
-            border: 1px solid #a0a0a0;
-            margin-top: 10px;
+        /* Ajustes específicos para móviles */
+        @media (max-width: 768px) {
+            .tab-active { border-left: none; border-top: 4px solid #60a5fa; background-color: rgba(255, 255, 255, 0.1); }
+            body { padding: 0; }
+            .app-window { border-radius: 0; border: none; height: 100dvh; }
         }
 
-        .retro-table th {
-            background: linear-gradient(to bottom, #f3f3f3, #e2e2e2);
-            border-right: 1px solid #d0d0d0;
-            border-bottom: 1px solid #a0a0a0;
-            padding: 4px;
-            text-align: left;
-            font-weight: normal;
-            color: #333;
-            position: sticky;
-            top: 0;
-            box-shadow: 0 1px 0 #fff inset;
-        }
-
-        .retro-table td {
-            border-right: 1px dotted #ccc;
-            border-bottom: 1px dotted #ccc;
-            padding: 6px 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 200px;
-        }
-
-        .retro-table tr:nth-child(even) { background-color: #f9f9f9; }
-        .retro-table tr:hover {
-            background-color: #0a246a;
-            color: white;
-            cursor: default;
-        }
-
-        .progress-container {
-            width: 100%;
-            height: 16px;
-            background-color: #fff;
-            border: 1px inset #a0a0a0;
-            position: relative;
-        }
-
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(to bottom, #4cd964, #34c759);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-        
-        .progress-text {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            text-align: center;
-            font-size: 10px;
-            line-height: 16px;
-            color: #000;
-            font-weight: bold;
-            text-shadow: 1px 1px 0px rgba(255,255,255,0.7);
-        }
-
-        .format-mp3 { color: #e67e22; }
-        .format-mp4 { color: #3498db; }
-        
-        /* Modales Customizados */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
-            z-index: 200;
-            justify-content: center;
-            align-items: center;
-        }
-        .alert-box {
-            background: #ECE9D8;
-            border: 2px solid #0054E3;
-            padding: 2px;
-            width: 300px;
-            box-shadow: 2px 2px 10px rgba(0,0,0,0.5);
-        }
-        .alert-header {
-            background: linear-gradient(to bottom, #0058e6, #127dff);
-            color: white;
-            padding: 4px 8px;
-            font-weight: bold;
-            font-size: 12px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .alert-body {
-            background: white;
-            padding: 15px;
-            font-size: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+        /* Ocultar barra de desplazamiento para que parezca app nativa */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
     </style>
 </head>
-<body class="p-0 md:p-6 lg:p-10">
+<body class="h-screen w-full flex items-center justify-center sm:p-4 overflow-hidden">
 
-    <!-- Modal de Alerta Básica para Errores/Avisos -->
-    <div id="customAlert" class="modal-overlay">
-        <div class="alert-box">
-            <div class="alert-header"><span>AresTube - Aviso</span></div>
-            <div class="alert-body text-center">
-                <p id="alertMessage" class="mb-4">Mensaje</p>
-                <button class="retro-button" onclick="closeAlert()">Aceptar</button>
+    <!-- Ventana principal de la aplicación -->
+    <div class="app-window bg-white w-full max-w-5xl h-full sm:h-[90vh] sm:rounded-xl flex flex-col md:flex-row overflow-hidden shadow-2xl relative">
+        
+        <!-- Panel lateral (Desktop) / Barra inferior (Móvil) -->
+        <div class="sidebar-gradient w-full md:w-64 text-white flex flex-row md:flex-col flex-shrink-0 order-last md:order-first z-20 shadow-lg md:shadow-none">
+            
+            <!-- Cabecera Logo (Solo visible en Desktop) -->
+            <div class="hidden md:flex p-6 items-center gap-3 border-b border-blue-800 shadow-sm bg-black bg-opacity-20">
+                <i class="fas fa-cloud-download-alt text-3xl text-blue-300"></i>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wide">Tube<span class="text-blue-300">Downloader</span></h1>
+                    <p class="text-xs text-blue-200 opacity-80">Edición Móvil & Web</p>
+                </div>
             </div>
-        </div>
-    </div>
+            
+            <!-- Navegación -->
+            <nav class="flex-1 flex flex-row md:flex-col p-0 md:p-3 w-full">
+                <button onclick="switchTab('search')" id="tab-search" class="flex-1 md:w-full text-center md:text-left px-2 md:px-4 py-4 md:py-3 md:rounded md:mb-1 text-xs md:text-sm font-medium transition-colors hover:bg-white hover:bg-opacity-10 tab-active flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3">
+                    <i class="fas fa-search text-xl md:text-base md:w-5 text-center"></i> 
+                    <span>Buscar</span>
+                </button>
+                <button onclick="switchTab('downloads')" id="tab-downloads" class="flex-1 md:w-full text-center md:text-left px-2 md:px-4 py-4 md:py-3 md:rounded md:mb-1 text-xs md:text-sm font-medium transition-colors hover:bg-white hover:bg-opacity-10 flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 relative">
+                    <i class="fas fa-arrow-down text-xl md:text-base md:w-5 text-center"></i> 
+                    <span>Descargas</span>
+                    <span id="dl-badge" class="absolute md:relative top-2 md:top-auto right-4 md:right-auto md:ml-auto bg-blue-500 text-white px-1.5 py-0.5 rounded-full text-[10px] md:text-xs font-bold hidden shadow">0</span>
+                </button>
+            </nav>
 
-    <!-- Iframe Oculto: Aquí ocurre la verdadera magia invisible -->
-    <iframe id="hiddenDownloader" style="display:none;"></iframe>
-
-    <div class="ares-window mx-auto w-full max-w-5xl">
-        <!-- Barra de Título -->
-        <div class="ares-titlebar">
-            <div>
-                <i class="fas fa-download mr-1"></i> AresTube - Red de Descargas
-            </div>
-            <div class="ares-titlebar-buttons">
-                <button>_</button>
-                <button>□</button>
-                <button class="close">X</button>
-            </div>
-        </div>
-
-        <!-- Pestañas -->
-        <div class="ares-tabs-container">
-            <div class="ares-tab active" onclick="switchTab('search')">
-                <i class="fas fa-search"></i> Búsqueda
-            </div>
-            <div class="ares-tab" onclick="switchTab('downloads')">
-                <i class="fas fa-download"></i> Descargas <span id="download-badge" class="ml-1 text-[10px] bg-red-500 text-white px-1 rounded-full hidden">0</span>
-            </div>
-            <div class="ares-tab" onclick="switchTab('settings')">
-                <i class="fas fa-cog"></i> Panel de Control
+            <!-- Estado de conexión (Solo Desktop) -->
+            <div class="hidden md:flex p-4 border-t border-blue-800 text-xs items-center gap-2 bg-black bg-opacity-20">
+                <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse shadow-[0_0_8px_#4ade80]"></div>
+                Sistema conectado
             </div>
         </div>
 
-        <!-- Contenido: Búsqueda -->
-        <div id="tab-search" class="ares-content active">
-            <div class="flex flex-col md:flex-row gap-4 h-full">
-                <!-- Panel Izquierdo: Filtros -->
-                <div class="w-full md:w-1/4 search-box h-fit">
-                    <h3 class="font-bold text-sm mb-2 border-b border-gray-300 pb-1">Criterio de Búsqueda</h3>
+        <!-- Área de contenido principal -->
+        <div class="flex-1 flex flex-col bg-gray-50 overflow-hidden relative order-first md:order-last">
+            
+            <!-- VISTA: BÚSQUEDA -->
+            <div id="view-search" class="h-full flex flex-col absolute inset-0 bg-white">
+                
+                <!-- Barra de búsqueda superior -->
+                <div class="bg-white p-3 sm:p-5 border-b border-gray-200 shadow-sm z-10">
+                    <div class="flex md:hidden items-center gap-2 mb-3 px-1">
+                        <i class="fas fa-cloud-download-alt text-blue-600 text-xl"></i>
+                        <h1 class="text-lg font-bold text-gray-800">TubeDownloader</h1>
+                    </div>
+                    <div class="flex gap-2">
+                        <div class="relative flex-1">
+                            <i class="fas fa-link absolute left-3 top-3.5 text-gray-400"></i>
+                            <input type="text" id="searchInput" placeholder="Pega el enlace de YouTube o busca..." class="w-full pl-10 pr-4 py-3 bg-gray-100 border-none rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base transition-shadow" onkeypress="if(event.key==='Enter') performSearch()">
+                        </div>
+                        <button onclick="performSearch()" class="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-4 md:px-6 py-3 rounded-lg shadow-md transition-colors flex items-center justify-center">
+                            <i class="fas fa-search md:mr-2"></i>
+                            <span class="hidden md:inline font-medium">Buscar</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Lista de Resultados (Estilo Tarjetas para Móvil) -->
+                <div class="flex-1 overflow-y-auto p-2 sm:p-4 bg-gray-50 pb-24 md:pb-4">
                     
-                    <label class="text-xs font-bold text-blue-800">1. Pega la URL de YouTube:</label>
-                    <input type="text" id="searchInput" class="retro-input" placeholder="https://www.youtube.com/watch?v=..." value="">
-                    
-                    <label class="text-xs mt-3 font-bold text-blue-800">2. Elige el formato:</label>
-                    <div class="flex flex-col gap-1 text-xs">
-                        <label><input type="radio" name="format" value="mp3" checked> Audio (MP3)</label>
-                        <label><input type="radio" name="format" value="mp4"> Video (MP4)</label>
+                    <div id="loadingIndicator" class="hidden flex-col items-center justify-center h-48 text-gray-500">
+                        <i class="fas fa-circle-notch fa-spin text-4xl mb-3 text-blue-500"></i>
+                        <p class="font-medium animate-pulse">Analizando red...</p>
                     </div>
 
-                    <button class="retro-button mt-4 bg-blue-100 border-blue-400 font-bold" onclick="executeSearch()">
-                        <i class="fas fa-search mr-1 text-blue-600"></i> Buscar Archivo
+                    <div id="searchResultsList" class="flex flex-col gap-3">
+                        <!-- Estado inicial vacío -->
+                        <div class="flex flex-col items-center justify-center p-12 text-center text-gray-400 h-64">
+                            <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+                                <i class="fas fa-satellite-dish text-4xl text-blue-300"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-600 mb-1">Red de Búsqueda Activa</h3>
+                            <p class="text-sm max-w-xs">Pega la URL de tu video desde la app de YouTube o escribe el nombre para buscar.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VISTA: DESCARGAS -->
+            <div id="view-downloads" class="h-full flex flex-col absolute inset-0 hidden bg-white">
+                <div class="bg-white p-4 border-b border-gray-200 shadow-sm z-10 flex justify-between items-center">
+                    <h2 class="text-lg font-bold text-gray-800 flex items-center">
+                        <i class="fas fa-list-ul mr-2 text-blue-600"></i> Cola de Descargas
+                    </h2>
+                    <button onclick="clearCompleted()" class="text-sm text-gray-500 hover:text-red-500 bg-gray-100 px-3 py-1.5 rounded-md transition-colors font-medium">
+                        Limpiar
                     </button>
                 </div>
-
-                <!-- Panel Derecho: Resultados -->
-                <div class="w-full md:w-3/4 flex flex-col">
-                    <div class="text-xs mb-1 text-gray-600 font-bold" id="search-status">Listo. Esperando enlace de YouTube...</div>
-                    <div class="flex-grow border border-gray-400 overflow-auto bg-white" style="height: 350px;">
-                        <table class="retro-table mt-0 border-0" id="resultsTable">
-                            <thead>
-                                <tr>
-                                    <th style="width: 50%">Archivo Encontrado</th>
-                                    <th style="width: 15%">Formato</th>
-                                    <th style="width: 15%">Estado</th>
-                                    <th style="width: 20%">Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody id="resultsBody">
-                                <!-- Resultados aquí -->
-                            </tbody>
-                        </table>
+                
+                <div class="flex-1 overflow-y-auto p-3 sm:p-4 bg-gray-50 pb-24 md:pb-4">
+                    <div id="downloadsList" class="flex flex-col gap-3">
+                        <!-- Estado inicial vacío -->
+                        <div class="flex flex-col items-center justify-center p-12 text-center text-gray-400 h-64" id="emptyDownloadsMsg">
+                            <i class="fas fa-box-open text-5xl mb-4 text-gray-300"></i>
+                            <p class="text-sm">Tu cola de descargas está vacía.</p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Contenido: Descargas -->
-        <div id="tab-downloads" class="ares-content">
-            <div class="flex justify-between items-center mb-2">
-                <h3 class="font-bold text-sm">Transferencias (Lista de Espera)</h3>
-                <div>
-                    <button class="retro-button text-xs" onclick="clearCompleted()"><i class="fas fa-broom"></i> Limpiar Completados</button>
-                </div>
-            </div>
-            
-            <div class="border border-gray-400 overflow-auto bg-white h-full" style="max-height: 400px;">
-                <table class="retro-table mt-0 border-0" id="downloadsTable">
-                    <thead>
-                        <tr>
-                            <th style="width: 45%">Archivo</th>
-                            <th style="width: 25%">Progreso</th>
-                            <th style="width: 15%">Estado</th>
-                            <th style="width: 15%">Acción Final</th>
-                        </tr>
-                    </thead>
-                    <tbody id="downloadsBody">
-                        <tr><td colspan="4" class="text-center text-gray-500 py-4 italic">No hay transferencias activas.</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Contenido: Ajustes -->
-        <div id="tab-settings" class="ares-content">
-            <h3 class="font-bold text-sm mb-4 border-b pb-1">Configuración y Diagnóstico</h3>
-            <div class="text-xs space-y-4">
-                <div class="p-3 bg-green-50 border border-green-400 text-green-800 rounded">
-                    <strong>Automatización Total:</strong> 
-                    El sistema de ventanas emergentes y clics manuales ha sido deshabilitado. Ahora la aplicación se conecta internamente a la red y fuerza la descarga nativa en tu navegador en el momento exacto en que la barra verde llega a 100%. Experiencia 100% Ares.
-                </div>
-            </div>
-        </div>
-
-        <!-- Barra de estado inferior -->
-        <div class="bg-[#ECE9D8] border-t border-gray-400 p-1 flex justify-between text-[10px] text-gray-700">
-            <div><i class="fas fa-network-wired text-green-500"></i> Conectado (Motor Invisible)</div>
-            <div>AresTube v8.0 | Zero-Click Ready</div>
         </div>
     </div>
 
+    <!-- Contenedor para Notificaciones Toast -->
+    <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
     <script>
-        // --- CONTROL DE ALERTAS (Errores) ---
-        function showAlert(msg) {
-            document.getElementById('alertMessage').innerText = msg;
-            document.getElementById('customAlert').style.display = 'flex';
-        }
-        function closeAlert() {
-            document.getElementById('customAlert').style.display = 'none';
-        }
+        // --- ESTADO DE LA APLICACIÓN ---
+        let currentDownloads = [];
 
-        // --- LÓGICA DE PESTAÑAS ---
-        function switchTab(tabId) {
-            document.querySelectorAll('.ares-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.ares-tab').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-' + tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
-        }
-
-        // Extraer ID de YouTube
-        function getYouTubeID(url) {
-            const p = /(?:https?:\/\/)?(?:www\.|m\.)?youtu(?:\.be\/|be\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([^&?\s]+)/;
-            const match = url.match(p);
-            return match ? match[1] : null;
-        }
-
-        // --- BÚSQUEDA ---
-        function executeSearch() {
-            const query = document.getElementById('searchInput').value.trim();
-            const format = document.querySelector('input[name="format"]:checked').value;
-            const resultsBody = document.getElementById('resultsBody');
-            const statusText = document.getElementById('search-status');
+        // --- SISTEMA DE NOTIFICACIONES (TOAST) ---
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
             
-            if (!query) {
-                showAlert("Por favor pega un enlace de YouTube válido.");
+            let bgClass = 'bg-gray-800';
+            let icon = 'fa-info-circle';
+            
+            if (type === 'success') { bgClass = 'bg-green-600'; icon = 'fa-check-circle'; }
+            else if (type === 'error') { bgClass = 'bg-red-600'; icon = 'fa-exclamation-circle'; }
+            
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-lg shadow-xl text-sm font-medium flex items-center gap-3 transform transition-all duration-300 translate-y-[-20px] opacity-0 pointer-events-auto max-w-[90vw]`;
+            toast.innerHTML = `<i class="fas ${icon} text-lg"></i> <span>${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            // Animar entrada
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-[-20px]', 'opacity-0');
+            });
+            
+            // Eliminar después de 4 segundos
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-[-10px]');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // --- NAVEGACIÓN (PESTAÑAS) ---
+        function switchTab(tabId) {
+            document.getElementById('view-search').classList.add('hidden');
+            document.getElementById('view-downloads').classList.add('hidden');
+            
+            document.getElementById('tab-search').classList.remove('tab-active');
+            document.getElementById('tab-downloads').classList.remove('tab-active');
+            
+            document.getElementById('view-' + tabId).classList.remove('hidden');
+            document.getElementById('tab-' + tabId).classList.add('tab-active');
+        }
+
+        // --- LÓGICA DE BÚSQUEDA ---
+        async function performSearch() {
+            let input = document.getElementById('searchInput').value.trim();
+            if (!input) return;
+
+            const listContainer = document.getElementById('searchResultsList');
+            const loading = document.getElementById('loadingIndicator');
+            
+            listContainer.innerHTML = '';
+            loading.classList.remove('hidden');
+            loading.classList.add('flex');
+
+            // Detectar si el texto es un enlace de YouTube
+            const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+            const match = input.match(ytRegex);
+            const videoIdDirect = match ? match[1] : null;
+
+            let data = null;
+
+            try {
+                // Instancias de la API Piped
+                const instances = [
+                    'https://pipedapi.kavin.rocks',
+                    'https://pipedapi.smnz.de',
+                    'https://de-muc-pipedapi.wuk.sh'
+                ];
+                
+                for (let instance of instances) {
+                    try {
+                        let url = videoIdDirect 
+                            ? `${instance}/streams/${videoIdDirect}` 
+                            : `${instance}/search?q=${encodeURIComponent(input)}&filter=all`;
+
+                        const response = await fetch(url);
+                        if (response.ok) {
+                            const rawData = await response.json();
+                            
+                            if (videoIdDirect && rawData.title) {
+                                data = {
+                                    items: [{
+                                        type: 'stream',
+                                        url: `/watch?v=${videoIdDirect}`,
+                                        title: rawData.title,
+                                        uploaderName: rawData.uploader,
+                                        thumbnail: rawData.thumbnailUrl,
+                                        duration: rawData.duration
+                                    }]
+                                };
+                            } else {
+                                data = rawData;
+                            }
+                            break; 
+                        }
+                    } catch (e) {
+                        console.warn(`Instancia falló (posible bloqueo local): ${instance}`);
+                    }
+                }
+            } catch (error) {
+                console.error("Error al intentar buscar", error);
+            }
+
+            loading.classList.add('hidden');
+            loading.classList.remove('flex');
+
+            // --- MODO DE RESPALDO (ANTI-BLOQUEO LOCAL) ---
+            if ((!data || !data.items || data.items.length === 0) && videoIdDirect) {
+                data = {
+                    items: [{
+                        type: 'stream',
+                        url: `/watch?v=${videoIdDirect}`,
+                        title: "Video Detectado (Listo para descargar)",
+                        uploaderName: "Enlace Directo",
+                        thumbnail: `https://i.ytimg.com/vi/${videoIdDirect}/mqdefault.jpg`,
+                        duration: 0
+                    }]
+                };
+            }
+
+            if (!data || !data.items || data.items.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="text-center p-8 text-red-500 bg-red-50 rounded-lg mt-4 border border-red-100">
+                        <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
+                        <p class="font-medium mt-2">Conexión bloqueada por el navegador.</p>
+                        <p class="text-sm mt-1 text-red-400">Si estás usando el archivo localmente, por favor <b>pega directamente el enlace completo de YouTube</b> para forzar la descarga.</p>
+                    </div>`;
                 return;
             }
 
-            const videoId = getYouTubeID(query);
-            
-            if (videoId) {
-                statusText.innerText = `Enlace detectado. Listo para preparar descarga.`;
-                const title = `Video_YouTube_${videoId}`;
-                const formatIcon = format === 'mp3' ? '<i class="fas fa-file-audio format-mp3"></i> MP3' : '<i class="fas fa-file-video format-mp4"></i> MP4';
+            const videos = data.items.filter(item => item.type === 'stream');
 
-                resultsBody.innerHTML = `
-                    <tr>
-                        <td class="font-bold text-blue-700"><img src="https://img.youtube.com/vi/${videoId}/default.jpg" class="h-6 w-8 inline mr-2 object-cover border border-gray-400"> ${title}</td>
-                        <td>${formatIcon}</td>
-                        <td class="text-green-600">Disponible</td>
-                        <td>
-                            <button class="retro-button bg-blue-100 border-blue-400 font-bold" 
-                                    onclick="startDownload('${title}', '${query}', '${format}')">
-                                <i class="fas fa-download text-blue-700"></i> Bajar a PC
-                            </button>
-                        </td>
-                    </tr>
+            videos.forEach((video) => {
+                const videoId = video.url.split('v=')[1] || video.url.split('/').pop();
+                const title = video.title.replace(/"/g, '&quot;');
+                const author = video.uploaderName.replace(/"/g, '&quot;');
+                const time = formatTime(video.duration);
+
+                const card = document.createElement('div');
+                card.className = 'bg-white border border-gray-200 rounded-xl p-3 shadow-sm hover:shadow-md transition-shadow flex flex-col sm:flex-row gap-3 sm:items-center';
+                
+                card.innerHTML = `
+                    <div class="flex items-start gap-3 flex-1 overflow-hidden">
+                        <div class="w-28 h-16 sm:w-32 sm:h-20 bg-gray-200 rounded-lg flex-shrink-0 bg-cover bg-center shadow-inner relative" style="background-image: url('${video.thumbnail}')">
+                            ${video.duration > 0 ? `<div class="absolute bottom-1 right-1 bg-black bg-opacity-70 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">${time}</div>` : ''}
+                        </div>
+                        <div class="flex-1 min-w-0 py-1">
+                            <h3 class="font-bold text-gray-800 text-sm sm:text-base leading-tight line-clamp-2" title="${title}">${title}</h3>
+                            <p class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                <i class="fas fa-user-circle"></i> <span class="truncate">${author}</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 justify-end border-t sm:border-t-0 border-gray-100 pt-3 sm:pt-0 mt-1 sm:mt-0">
+                        <button onclick="startDownload('${videoId}', '${title}', 'audio')" class="flex-1 sm:flex-none bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-2 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-1.5">
+                            <i class="fas fa-music"></i> <span class="sm:hidden">Audio</span>
+                        </button>
+                        <button onclick="startDownload('${videoId}', '${title}', 'video')" class="flex-1 sm:flex-none bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-3 py-2 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-1.5">
+                            <i class="fas fa-video"></i> <span class="sm:hidden">Video</span>
+                        </button>
+                    </div>
                 `;
-            } else {
-                statusText.innerText = `Error: No se detectó un enlace válido.`;
-                resultsBody.innerHTML = `<tr><td colspan="4" class="text-red-500 text-center py-4">El enlace no parece ser de YouTube.</td></tr>`;
-            }
+                listContainer.appendChild(card);
+            });
         }
 
-        // --- SISTEMA DE DESCARGAS (AUTOMATIZADO) ---
-        let downloads = [];
-        let downloadIdCounter = 0;
+        function formatTime(seconds) {
+            if (!seconds || seconds <= 0) return "--:--";
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
 
-        function updateDownloadBadge() {
-            const activeCount = downloads.filter(d => d.progress < 100).length;
-            const badge = document.getElementById('download-badge');
-            if(activeCount > 0) {
+        // --- LÓGICA DE DESCARGAS (SIMULACIÓN DE ESPERA) ---
+        function startDownload(videoId, title, type) {
+            switchTab('downloads');
+            
+            const dlId = 'dl_' + Date.now();
+            const newDownload = {
+                id: dlId,
+                videoId: videoId,
+                title: title,
+                type: type, 
+                progress: 0,
+                status: 'Procesando archivo...',
+                completed: false
+            };
+            
+            currentDownloads.push(newDownload);
+            updateDownloadsUI();
+
+            // Simulación visual
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.floor(Math.random() * 20) + 10; 
+                
+                const dlIndex = currentDownloads.findIndex(d => d.id === dlId);
+                if (dlIndex !== -1) {
+                    if (progress >= 100) {
+                        currentDownloads[dlIndex].progress = 100;
+                        currentDownloads[dlIndex].status = 'Listo para guardar';
+                        currentDownloads[dlIndex].completed = true;
+                        clearInterval(interval);
+                        updateDownloadsUI();
+                        showToast(`¡Tu archivo está listo para bajar!`, 'success');
+                    } else {
+                        currentDownloads[dlIndex].progress = progress;
+                        currentDownloads[dlIndex].status = `Compilando... ${progress}%`;
+                        updateDownloadsUI();
+                    }
+                } else {
+                    clearInterval(interval);
+                }
+            }, 500);
+        }
+
+        function updateDownloadsUI() {
+            const container = document.getElementById('downloadsList');
+            const msg = document.getElementById('emptyDownloadsMsg');
+            const badge = document.getElementById('dl-badge');
+            
+            const activeCount = currentDownloads.filter(d => !d.completed).length;
+            if (activeCount > 0) {
                 badge.innerText = activeCount;
                 badge.classList.remove('hidden');
             } else {
                 badge.classList.add('hidden');
             }
-        }
 
-        function renderDownloads() {
-            const tbody = document.getElementById('downloadsBody');
-            if (downloads.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-500 py-4 italic">No hay transferencias activas.</td></tr>';
+            if (currentDownloads.length === 0) {
+                msg.style.display = 'flex';
+                container.innerHTML = '';
+                container.appendChild(msg);
                 return;
             }
 
+            msg.style.display = 'none';
             let html = '';
-            downloads.forEach(d => {
-                let statusColor = 'text-blue-600';
-                if(d.progress >= 100) statusColor = d.status === 'Error de conexión' ? 'text-red-600 font-bold' : 'text-green-600 font-bold';
-                
-                let actionText = `<span class="text-gray-400 italic text-xs">Conectando...</span>`;
-                
-                // Si ya completó, solo mostramos un texto o ícono. Nada de botones para hacer clic.
-                if(d.progress >= 100) {
-                    if (d.status === 'Error de conexión') {
-                        actionText = `<span class="text-red-500 text-xs"><i class="fas fa-times-circle"></i> Fallido</span>`;
-                    } else {
-                        actionText = `<span class="text-green-600 font-bold text-xs"><i class="fas fa-folder-open"></i> En PC</span>`;
-                    }
-                }
 
+            [...currentDownloads].reverse().forEach(dl => {
+                const isAudio = dl.type === 'audio';
+                const icon = isAudio ? 'fa-music text-emerald-500' : 'fa-video text-blue-500';
+                const format = isAudio ? 'MP3' : 'MP4';
+                const isComplete = dl.completed;
+                const progressColor = isComplete ? 'bg-green-500' : 'bg-blue-500 progress-bar-striped';
+                
                 html += `
-                    <tr>
-                        <td title="${d.title}" class="font-bold">${d.title} [${d.format.toUpperCase()}]</td>
-                        <td>
-                            <div class="progress-container">
-                                <div class="progress-bar" style="width: ${d.progress}%;"></div>
-                                <div class="progress-text">${Math.floor(d.progress)}%</div>
+                    <div class="border border-gray-200 rounded-xl p-3 bg-white flex flex-col sm:flex-row gap-3 shadow-sm">
+                        <div class="flex items-center gap-3 flex-1 overflow-hidden">
+                            <div class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center flex-shrink-0 border border-gray-100">
+                                <i class="fas ${icon} text-lg"></i>
                             </div>
-                        </td>
-                        <td class="${statusColor}">${d.status}</td>
-                        <td class="text-center">${actionText}</td>
-                    </tr>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-bold text-gray-800 text-sm truncate" title="${dl.title}">${dl.title}</div>
+                                <div class="text-[11px] text-gray-500 font-medium mt-0.5">
+                                    ${format} • <span id="status-${dl.id}">${dl.status}</span>
+                                </div>
+                                <div class="w-full bg-gray-100 rounded-full h-1.5 mt-2 overflow-hidden">
+                                    <div class="${progressColor} h-1.5 rounded-full transition-all duration-300" style="width: ${dl.progress}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex sm:flex-col gap-2 mt-2 sm:mt-0 justify-end flex-shrink-0 w-full sm:w-auto border-t sm:border-t-0 border-gray-50 pt-2 sm:pt-0">
+                            ${isComplete ? 
+                                `<button onclick="executeFinalDownload('${dl.videoId}', '${dl.type}', this)" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-4 py-2 rounded-lg w-full sm:w-auto shadow-md flex items-center justify-center gap-2 transition-colors">
+                                    <i class="fas fa-download"></i> Guardar
+                                </button>` 
+                                : 
+                                `<button onclick="cancelDownload('${dl.id}')" class="bg-red-50 text-red-600 border border-red-200 text-xs font-bold px-4 py-2 rounded-lg w-full sm:w-auto hover:bg-red-100 transition-colors">
+                                    Cancelar
+                                </button>`
+                            }
+                        </div>
+                    </div>
                 `;
             });
-            tbody.innerHTML = html;
+            
+            container.innerHTML = '';
+            container.appendChild(msg);
+            container.insertAdjacentHTML('beforeend', html);
+        }
+
+        // --- SISTEMA MULTI-PROXY EXTREMO: DESCARGA DIRECTA SIN PESTAÑAS NUEVAS ---
+        async function executeFinalDownload(videoId, type, btnElement) {
+            const ytUrl = `https://www.youtube.com/watch?v=${videoId}`;
+            
+            // Cambiamos el diseño del botón para mostrar que está trabajando
+            btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Obteniendo...';
+            btnElement.disabled = true;
+            btnElement.classList.replace('bg-blue-600', 'bg-blue-400');
+
+            // Payload Híbrido: Combina parámetros antiguos y nuevos de las APIs Open Source
+            const payload = {
+                url: ytUrl,
+                vQuality: "720",
+                videoQuality: "720",
+                isAudioOnly: type === 'audio',
+                downloadMode: type === 'audio' ? 'audio' : 'auto',
+                aFormat: "mp3",
+                audioFormat: "mp3",
+                filenamePattern: "classic"
+            };
+
+            // Lista de los mejores servidores públicos
+            const endpoints = [
+                'https://api.cobalt.tools/', 
+                'https://api.cobalt.tools/api/json',
+                'https://cobalt.qwy2.dev/'
+            ];
+
+            // Proxies mágicos para saltarnos la seguridad CORS de Chrome al usar archivos locales (file:///)
+            const proxies = [
+                '', // Intento #1: Directo
+                'https://corsproxy.io/?', // Intento #2: Proxy Principal
+                'https://api.codetabs.com/v1/proxy?quest=' // Intento #3: Proxy de Respaldo
+            ];
+
+            let finalDownloadUrl = null;
+
+            // Bucle maestro: Prueba hasta 9 combinaciones diferentes en milisegundos hasta que una funcione
+            for (let proxy of proxies) {
+                if (finalDownloadUrl) break;
+                
+                for (let ep of endpoints) {
+                    if (finalDownloadUrl) break;
+                    
+                    try {
+                        let targetUrl = ep;
+                        if (proxy) {
+                            // Construir URL del proxy correctamente
+                            targetUrl = proxy === 'https://corsproxy.io/?' 
+                                ? proxy + encodeURIComponent(ep) 
+                                : proxy + ep;
+                        }
+
+                        const response = await fetch(targetUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            // Si la API nos devuelve un enlace real, lo capturamos
+                            if (data && (data.url || data.stream)) {
+                                finalDownloadUrl = data.url || data.stream;
+                                break;
+                            }
+                        }
+                    } catch (error) {
+                        // El navegador bloqueó esta ruta, continuamos silenciosamente a la siguiente
+                    }
+                }
+            }
+
+            if (finalDownloadUrl) {
+                showToast("¡Descarga iniciada! Revisa tus descargas.", "success");
+                
+                // Redirigimos la ventana en la que estás al archivo.
+                // Esto fuerza a Chrome a descargar el archivo sin abrir ninguna pestaña molesta.
+                window.location.href = finalDownloadUrl;
+
+                // Actualizamos el botón para indicar éxito
+                btnElement.innerHTML = '<i class="fas fa-check"></i> Descargado';
+                btnElement.classList.replace('bg-blue-400', 'bg-green-600');
+            } else {
+                showToast("El navegador bloqueó todas las conexiones de seguridad. Reintenta.", "error");
+                
+                // Si llegara a fallar, restauramos el botón rojo para que puedas reintentar
+                btnElement.innerHTML = '<i class="fas fa-redo"></i> Reintentar';
+                btnElement.classList.replace('bg-blue-400', 'bg-red-500');
+                btnElement.disabled = false;
+            }
+        }
+
+        function cancelDownload(id) {
+            currentDownloads = currentDownloads.filter(d => d.id !== id);
+            updateDownloadsUI();
         }
 
         function clearCompleted() {
-            downloads = downloads.filter(d => d.progress < 100);
-            renderDownloads();
-            updateDownloadBadge();
+            currentDownloads = currentDownloads.filter(d => !d.completed);
+            updateDownloadsUI();
+            showToast("Lista limpiada", "info");
         }
-
-        // Iniciar Descarga 100% Invisible y Automática
-        async function startDownload(title, url, format) {
-            const id = downloadIdCounter++;
-            
-            const dl = { 
-                id, 
-                title, 
-                url, 
-                format, 
-                progress: 0, 
-                status: 'Conectando fuentes...'
-            };
-            
-            downloads.push(dl);
-            switchTab('downloads');
-            renderDownloads();
-            updateDownloadBadge();
-
-            // 1. Petición Silenciosa a la API para obtener el enlace directo real del video/audio
-            let directUrl = null;
-            
-            // Configuramos el payload para Cobalt v10 (es la API pública más rápida y sin anuncios)
-            const payload = {
-                url: url,
-                downloadMode: format === 'mp3' ? 'audio' : 'auto',
-                aFormat: format === 'mp3' ? 'mp3' : 'best',
-                vQuality: '720'
-            };
-
-            // Hacemos la petición en segundo plano mientras la barra sube
-            fetch('https://api.cobalt.tools/', {
-                method: 'POST',
-                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data && data.url) {
-                    directUrl = data.url; // ¡Obtuvimos el enlace del archivo real!
-                }
-            })
-            .catch(err => console.log("Buscando rutas alternas..."));
-
-            // 2. Simulamos la barra de progreso de Ares para mantener la inmersión
-            let simInterval = setInterval(() => {
-                dl.progress += Math.random() * 10 + 5; 
-                
-                if (dl.progress < 50) {
-                    dl.status = 'Descargando datos...';
-                } else if (dl.progress < 90) {
-                    dl.status = 'Verificando archivo...';
-                }
-
-                // Al llegar al 100% ejecutamos la orden final
-                if(dl.progress >= 100) {
-                    dl.progress = 100;
-                    clearInterval(simInterval);
-                    
-                    if(directUrl) {
-                        dl.status = '¡Completado!';
-                        
-                        // ! MAGIA ARES: Inyectamos el enlace en el iframe oculto
-                        // Esto hace que el navegador inicie la descarga automáticamente sin cambiar de pestaña
-                        document.getElementById('hiddenDownloader').src = directUrl;
-                        
-                    } else {
-                        dl.status = 'Error de conexión';
-                        showAlert("Los nodos de la red están saturados o el video tiene restricción de edad. Intenta con otro enlace.");
-                    }
-
-                    updateDownloadBadge();
-                    renderDownloads();
-                } else {
-                    renderDownloads();
-                }
-            }, 600);
-        }
-
-        // Iniciar con enter
-        document.getElementById('searchInput').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') executeSearch();
-        });
     </script>
 </body>
 </html>
