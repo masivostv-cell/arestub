@@ -106,7 +106,7 @@
                     
                     <div id="loadingIndicator" class="hidden flex-col items-center justify-center h-48 text-gray-500">
                         <i class="fas fa-circle-notch fa-spin text-4xl mb-3 text-blue-500"></i>
-                        <p class="font-medium animate-pulse">Traspasando seguridad de red...</p>
+                        <p class="font-medium animate-pulse">Analizando red...</p>
                     </div>
 
                     <div id="searchResultsList" class="flex flex-col gap-3">
@@ -194,7 +194,7 @@
             document.getElementById('tab-' + tabId).classList.add('tab-active');
         }
 
-        // --- LÓGICA DE BÚSQUEDA ROBUSTA (SALTA CORS DE GITHUB) ---
+        // --- LÓGICA DE BÚSQUEDA ---
         async function performSearch() {
             let input = document.getElementById('searchInput').value.trim();
             if (!input) return;
@@ -225,43 +225,34 @@
                     ? `${instance}/streams/${videoIdDirect}` 
                     : `${instance}/search?q=${encodeURIComponent(input)}&filter=all`;
 
-                // Intento #1: Directo, Intento #2: Proxy CORS (AllOrigins)
-                const attempts = [
-                    apiUrl,
-                    `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`
-                ];
-
-                for(let tryUrl of attempts) {
-                    if(data) break;
-                    try {
-                        const response = await fetch(tryUrl);
-                        if (response.ok) {
-                            const rawData = await response.json();
-                            if (videoIdDirect && rawData.title) {
-                                data = {
-                                    items: [{
-                                        type: 'stream',
-                                        url: `/watch?v=${videoIdDirect}`,
-                                        title: rawData.title,
-                                        uploaderName: rawData.uploader,
-                                        thumbnail: rawData.thumbnailUrl,
-                                        duration: rawData.duration
-                                    }]
-                                };
-                            } else {
-                                data = rawData;
-                            }
+                try {
+                    const response = await fetch(apiUrl);
+                    if (response.ok) {
+                        const rawData = await response.json();
+                        if (videoIdDirect && rawData.title) {
+                            data = {
+                                items: [{
+                                    type: 'stream',
+                                    url: `/watch?v=${videoIdDirect}`,
+                                    title: rawData.title,
+                                    uploaderName: rawData.uploader,
+                                    thumbnail: rawData.thumbnailUrl,
+                                    duration: rawData.duration
+                                }]
+                            };
+                        } else {
+                            data = rawData;
                         }
-                    } catch (e) {
-                        // El proxy salva los errores de red
                     }
+                } catch (e) {
+                    console.warn("Fallo búsqueda en " + instance);
                 }
             }
 
             loading.classList.add('hidden');
             loading.classList.remove('flex');
 
-            // Fallback si incluso el proxy falló pero hay link
+            // Respaldo de emergencia si hay link pero fallan las búsquedas
             if ((!data || !data.items || data.items.length === 0) && videoIdDirect) {
                 data = {
                     items: [{
@@ -279,7 +270,7 @@
                 listContainer.innerHTML = `
                     <div class="text-center p-8 text-red-500 bg-red-50 rounded-lg mt-4 border border-red-100">
                         <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
-                        <p class="font-medium mt-2">Red de búsqueda inaccesible.</p>
+                        <p class="font-medium mt-2">No se encontraron resultados.</p>
                         <p class="text-sm mt-1 text-red-400">Verifica el enlace o tu conexión a internet.</p>
                     </div>`;
                 return;
@@ -436,80 +427,75 @@
             container.insertAdjacentHTML('beforeend', html);
         }
 
-        // --- SISTEMA DIRECTO CON ANTI-BLOQUEOS GITHUB PAGES ---
+        // --- SISTEMA DIRECTO NATIVO (API V7 COBALT CORRECTA) ---
         async function executeFinalDownload(videoId, type, btnElement) {
-            btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Obteniendo archivo...';
+            const ytUrl = `https://www.youtube.com/watch?v=${videoId}`;
+            
+            btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Conectando API...';
             btnElement.disabled = true;
             btnElement.classList.replace('bg-blue-600', 'bg-blue-400');
 
-            // Usamos las APIs que devuelven el enlace directo crudo (.mp4/.m4a)
+            // Instancias públicas de Cobalt que SÍ aceptan peticiones desde GitHub Pages
             const instances = [
-                'https://pipedapi.kavin.rocks',
-                'https://pipedapi.smnz.de',
-                'https://de-muc-pipedapi.wuk.sh'
+                'https://api.cobalt.tools',
+                'https://co.wuk.sh',
+                'https://api.cobalt.acyl.ru',
+                'https://cobalt-api.kwiatekit.com'
             ];
 
             let finalUrl = null;
-            let ext = type === 'audio' ? 'm4a' : 'mp4';
 
-            // Bucle Anti-CORS usando AllOrigins Proxy
             for (let instance of instances) {
                 if (finalUrl) break;
                 
-                const apiUrl = `${instance}/streams/${videoId}`;
-                const attempts = [
-                    apiUrl, // Intento directo
-                    `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}` // Intento Proxy (Infallible en GitHub Pages)
-                ];
+                try {
+                    // Petición exacta con el formato de la Versión 7 de la API
+                    const res = await fetch(instance, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            url: ytUrl,
+                            videoQuality: "720", 
+                            audioFormat: "mp3",  
+                            isAudioOnly: type === 'audio',
+                            filenamePattern: "classic"
+                        })
+                    });
 
-                for (let url of attempts) {
-                    if (finalUrl) break;
-                    try {
-                        const res = await fetch(url);
-                        if (res.ok) {
-                            const data = await res.json();
-                            
-                            // Buscar el archivo crudo
-                            if (type === 'audio' && data.audioStreams && data.audioStreams.length > 0) {
-                                const bestAudio = data.audioStreams.find(s => s.mimeType.includes('m4a')) || data.audioStreams[0];
-                                finalUrl = bestAudio.url;
-                            } else if (type === 'video' && data.videoStreams && data.videoStreams.length > 0) {
-                                const combined = data.videoStreams.filter(s => !s.videoOnly);
-                                const bestVideo = combined.find(s => s.quality === '720p') || combined[0] || data.videoStreams[0];
-                                finalUrl = bestVideo.url;
-                            }
+                    if (res.ok) {
+                        const data = await res.json();
+                        // Si la API nos responde con éxito, nos da el enlace directo crudo
+                        if (data && data.url) {
+                            finalUrl = data.url;
+                            break;
                         }
-                    } catch(e) {
-                        // Continuar silenciosamente
                     }
+                } catch(e) {
+                    // Si un servidor falla, intenta con el siguiente en milisegundos
+                    console.warn("Fallo servidor " + instance);
                 }
             }
 
             if (finalUrl) {
-                showToast("¡Enlace listo! Descargando...", "success");
+                showToast("¡Archivo extraído! Iniciando descarga nativa...", "success");
                 
-                // Usamos etiqueta oculta para forzar la acción nativa de descarga del navegador
-                const a = document.createElement('a');
-                a.href = finalUrl;
-                a.target = '_blank';
-                a.download = `TubeDownload_${videoId}.${ext}`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
+                // Esto es lo que inicia la descarga en tu navegador sin abrir pestañas.
+                // Reemplaza la dirección de la ventana actual con el archivo (que fuerza descarga).
+                window.location.href = finalUrl;
 
                 btnElement.innerHTML = '<i class="fas fa-check"></i> Descargado';
                 btnElement.classList.replace('bg-blue-400', 'bg-green-600');
                 btnElement.disabled = false;
             } else {
-                showToast("Activando enlace de seguridad alternativo...", "error");
+                showToast("Todos los servidores públicos están ocupados. Intenta de nuevo.", "error");
                 
-                // Fallback final: Si la red del usuario bloquea ABSOLUTAMENTE todo, abrimos yt5s seguro.
-                setTimeout(() => {
-                    window.open(`https://yt5s.biz/es/?q=https://www.youtube.com/watch?v=${videoId}`, '_blank');
-                    btnElement.innerHTML = '<i class="fas fa-redo"></i> Reintentar';
-                    btnElement.classList.replace('bg-blue-400', 'bg-red-500');
-                    btnElement.disabled = false;
-                }, 1500);
+                // Devuelve el botón a estado "Reintentar" para que el usuario pueda volver a pulsar
+                btnElement.innerHTML = '<i class="fas fa-redo"></i> Reintentar';
+                btnElement.classList.replace('bg-blue-400', 'bg-red-500');
+                btnElement.disabled = false;
             }
         }
 
